@@ -1,4 +1,3 @@
-from cmath import rect
 from random import randint
 from tkinter import *
 
@@ -7,12 +6,13 @@ class Square:
     has_mine = bool(False)
     surrounding_mines = 0
     is_pressed = bool(False)
-    visited = bool(False)
-    rect
     r = 0
     c = 0
     x = 0
     y = 0
+
+    rect = 0
+    text = 0
 
     def __init__(self, has_mine, surrounding_mines, r, c, x, y):
         self.has_mine = has_mine
@@ -63,11 +63,13 @@ def lose():
         for c in range(30):
             if arr[r][c].has_mine == bool(True):
                 my_canvas.itemconfig(arr[r][c].rect, fill='red')
-                my_canvas.create_text(arr[r][c].x + 18, arr[r][c].y + 18, fill="black", font="Arial 20 bold", text="M")
+                my_canvas.itemconfig(arr[r][c].text, text="M")
             else:
                 my_canvas.itemconfig(arr[r][c].rect, fill='yellow')
-                my_canvas.create_text(arr[r][c].x + 18, arr[r][c].y + 18, fill="black", font="Arial 20 bold",
-                                      text=arr[r][c].surrounding_mines)
+                my_canvas.itemconfig(arr[r][c].text, text=arr[r][c].surrounding_mines)
+
+
+
     global lose_window
     lose_window = Toplevel(window)
     lose_window.title("Game Over")
@@ -76,7 +78,7 @@ def lose():
     lbl = Label(lose_window, text="Game Over")
     lbl.pack
 
-    try_again_button = Button(lose_window, text="Try Again", command=lambda:[lose_window.destroy(), restart()])
+    try_again_button = Button(lose_window, text="Try Again", command=lambda: [lose_window.destroy(), restart()])
     try_again_button.pack()
 
 
@@ -90,17 +92,16 @@ def restart():
 
 
 def empty_square_recursion(sq, row, col):
-    if sq.visited == bool(True):
+    if sq.is_pressed == bool(True):
         return
-    add_square()
 
     my_canvas.itemconfig(arr[row][col].rect, fill='yellow')
-    my_canvas.create_text(sq.x + 18, sq.y + 18, fill="black", font="Arial 20 bold", text=sq.surrounding_mines)
+    my_canvas.itemconfig(sq.text, text=sq.surrounding_mines)
+    sq.is_pressed = bool(True)
+    add_square()
 
     if sq.surrounding_mines != 0:
         return
-
-    sq.visited = bool(True)
 
 
 
@@ -122,8 +123,6 @@ def empty_square_recursion(sq, row, col):
         empty_square_recursion(arr[row][col + 1], row, col + 1)  # r c+
 
 
-
-
 def on_click(event):
     col = event.x // 35
     row = event.y // 35
@@ -133,13 +132,15 @@ def on_click(event):
     if s.has_mine == bool(True):
         lose()
     else:
-        if s.surrounding_mines == 0:
-            empty_square_recursion(s, row, col)
-        else:
-            my_canvas.itemconfig(arr[row][col].rect, fill='yellow')
-            my_canvas.create_text(s.x + 18, s.y + 18, fill="black", font="Arial 20 bold", text=s.surrounding_mines)
-            add_square()
+        if s.is_pressed == bool(False):
 
+            if s.surrounding_mines == 0:
+                empty_square_recursion(s, row, col)
+            else:
+                my_canvas.itemconfig(s.rect, fill='yellow')
+                my_canvas.itemconfig(s.text, text=s.surrounding_mines)
+                s.is_pressed = bool(True)
+                add_square()
 
 
 def on_right_click(event):
@@ -147,10 +148,9 @@ def on_right_click(event):
     row = event.y // 35
 
     s = arr[row][col]
-    # my_canvas.itemconfig(rect_list[row][col], fill='yellow')
-    my_canvas.create_text(s.x + 18, s.y + 18, fill="black", font="Arial 20 bold", text="F")
-
-    win()
+    if (s.is_pressed == bool(False)):
+        my_canvas.itemconfig(s.rect, fill='white')
+        my_canvas.itemconfig(s.text, text="F")
 
 
 my_canvas.bind('<Button-1>', on_click)
@@ -222,9 +222,9 @@ def plant_mines():
 
 def create_squares():
 
-    size = 35
     for r in range(16):
         for c in range(30):
+            size = 35
             x = c * 35
             y = r * 35
             mine = bool(False)
@@ -234,14 +234,16 @@ def create_squares():
                 mine = bool(True)
             if arr[r][c].surrounding_mines == 0 and arr[r][c].has_mine == bool(False):
                 color = "blue"
+            if arr[r][c].surrounding_mines == 0 and arr[r][c].has_mine == bool(False):
+                color = "blue"
 
             arr[r][c].x = x
             arr[r][c].y = y
             arr[r][c].r = r
             arr[r][c].c = c
 
-            new_rect = my_canvas.create_rectangle(x, y, x + size, y + size, fill=color)
-            arr[r][c].rect = new_rect
+            arr[r][c].rect = my_canvas.create_rectangle(arr[r][c].x, arr[r][c].y, arr[r][c].x + size, arr[r][c].y + size, fill="white")
+            arr[r][c].text = my_canvas.create_text(arr[r][c].x + 18, arr[r][c].y + 18, fill="black", font="Arial 20 bold", text="")
 
 
 def main():
